@@ -1,0 +1,246 @@
+---
+title: "Bellabeat User Data Analysis"
+author: "Mia Chandler"
+date: "2025-11-05"
+output: html_document
+---
+
+```{r include=FALSE}
+knitr::opts_chunk$set(warning = FALSE)
+```
+
+<div style="text-align: center;">
+### Packages loaded for all tasks
+</div>
+
+```{r message=FALSE}
+
+library(scales)
+library(tidyverse)
+library(here) 
+library(lubridate)
+library(janitor)
+```
+
+<div style="text-align: center;">
+### Importing datasets & provisional cleaning
+</div>
+
+```{r include=FALSE}
+
+daily_metrics_master <- read_csv(here("master_daily_metrics_dataset.csv")) %>%
+janitor::clean_names() %>%
+rename(Id = user_id) %>%
+mutate(Date = parse_date_time(str_trim(date), c("mdy", "dmy", "ymd"))) 
+print("Daily Metrics Column Names after Cleaning:")
+print(colnames(daily_metrics_master))
+```
+
+```{r include=FALSE}
+hourly_metrics_master <- read_csv(here("master_hourly_metrics_dataset_formatted.csv"),
+                                  col_types = list(ActivityHour = col_character())) %>%
+janitor::clean_names() %>%
+rename(StepTotal = steps, 
+         TotalIntensityMinutes = total_intensity) %>% 
+  mutate(ActivityHour_Time = parse_date_time(str_trim(activity_hour),
+                                             c(
+                                               "mdy HMS", "dmy HMS", "ymd HMS", 
+                                               # Time without seconds
+                                               "mdy HM", "dmy HM", "ymd HM",
+                                               "ymd", "mdy", "dmy"
+                                               )), 
+         Hour = format(ActivityHour_Time, "%H"))
+```
+
+```{r include=FALSE}
+daily_activity_summary <- daily_metrics_master %>%
+  group_by(Id) %>%
+  summarise(Days_Logged = n_distinct(Date)) %>%
+  ungroup()
+```
+
+```{r include=FALSE}
+daily_activity_summary <- daily_activity_summary %>%
+  mutate(Activity_Level = case_when(
+    Days_Logged >= 28 ~ "Very Active",
+    Days_Logged >= 21 ~ "Active",
+    Days_Logged >= 14 ~ "Moderately Active",
+    Days_Logged >= 1 ~ "Lightly Active",
+    TRUE ~ "Inactive"
+  ))
+```
+
+```{r}
+daily_metrics_master <- daily_metrics_master %>%
+  left_join(daily_activity_summary %>% select(Id, Activity_Level), by = "Id")
+```
+
+```{r}
+daily_metrics_master <- daily_metrics_master %>%
+  mutate(Activity_Level = factor(Activity_Level, 
+                                 levels = c("Lightly Active", "Moderately Active", "Active", "Very Active")))
+```
+
+```{r}
+cat("\n--- User Segment Distribution ---\n")
+print(daily_activity_summary %>% count(Activity_Level, sort = TRUE))
+cat("\n-------------------------------\n")
+```
+
+```{r}
+master_heartrate_seconds_data_final <- read_csv(here("master_heartrate_seconds_data_final.csv"))
+
+master_minute_metrics_dataset <- read_csv(here("master_minute_metrics_dataset.csv"))
+
+```
+
+```{r}
+master_daily_calories_derived <- read_csv(here("master_daily_calories_derived.csv"))
+```
+
+```{r}
+master_weight_log_data <- read_csv(here("master_weight_log_data.csv"))
+```
+
+<div style="text-align: center;">
+## visualizations
+</div>
+
+```{r echo=FALSE}
+viz_sleep_distribution_histogram <- daily_metrics_master %>%
+  ggplot(aes(x = total_daily_sleep_minutes / 60)) + 
+  geom_histogram(binwidth = 0.5, fill = "lightblue", color = "darkblue") +
+  geom_vline(xintercept = 7, linetype = "dashed", color = "red", linewidth = 1) +
+  geom_vline(xintercept = 8.5, linetype = "dashed", color = "red", linewidth = 1) +
+  labs(title = "Distribution of Total Sleep Duration (Hours)",
+       subtitle = "Red dashed lines indicate the 7-8.5 hour recommended range.",
+       x = "Total Hours Asleep",
+       y = "Frequency (Number of Days)") +
+  theme_classic() +
+  scale_x_continuous(breaks = seq(4, 10, by = 1))
+
+print(viz_sleep_distribution_histogram)
+```
+
+```{r echo=FALSE}
+viz_24_hour_step_cycle <- hourly_metrics_master %>%
+  group_by(Hour) %>%
+  summarise(Average_Steps = mean(StepTotal, na.rm = TRUE)) %>%
+  ggplot(aes(x = as.integer(Hour), y = Average_Steps)) +
+  geom_line(color = "blue", linewidth = 1.2) +
+  geom_point(color = "red", size = 2) +
+  scale_x_continuous(breaks = seq(0, 23, by = 3)) +
+  labs(title = "Average Hourly Step Count Over a Day",
+       subtitle = "Clear peaks indicate concentrated morning and evening activity.",
+       x = "Hour of Day (24h)",
+       y = "Average Steps") +
+  theme_classic()
+
+print(viz_24_hour_step_cycle)
+```
+
+```{r echo=FALSE}
+viz_hourly_total_intensity <- hourly_metrics_master %>%
+  group_by(Hour) %>%
+  summarise(Average_Intensity = mean(TotalIntensityMinutes, na.rm = TRUE)) %>%
+  ggplot(aes(x = as.integer(Hour), y = Average_Intensity)) +
+  geom_bar(stat = "identity", fill = "salmon", color = "darkred") +
+  scale_x_continuous(breaks = seq(0, 23, by = 3)) +
+  labs(title = "Average Hourly Total Intensity Score",
+       subtitle = "Intensity is measured on a single scale, showing peak active hours.",
+       x = "Hour of Day (24h)",
+       y = "Average Total Intensity Score") +
+  theme_classic()
+
+print(viz_hourly_total_intensity)
+```
+
+```{r include=FALSE}
+daily_metrics_master <- daily_metrics_master %>%
+  mutate(DayOfWeek = factor(
+    weekdays(Date),
+    levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+  ))
+```
+
+```{r echo=FALSE}
+viz_segmented_non_utilization <- daily_metrics_master %>%
+  ggplot(aes(x = DayOfWeek, y = sedentary_minutes / 60)) + 
+  geom_boxplot(fill = "lightcoral", color = "darkred") +
+  labs(title = "Distribution of Sedentary Hours by Day of the Week",
+       subtitle = "Weekends show higher variance and median sedentary time.",
+       x = "Day of Week",
+       y = "Sedentary Hours") +
+  theme_classic()
+
+print(viz_segmented_non_utilization)
+```
+
+```{r include=FALSE}
+daily_intensity_data <- daily_metrics_master %>%
+  mutate(DayOfWeek = factor(
+    weekdays(Date),
+    levels = c("Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday")
+  )) %>%
+  group_by(DayOfWeek) %>%
+  summarise(
+    Sedentary = mean(sedentary_minutes, na.rm = TRUE),
+    VeryActive = mean(very_active_minutes, na.rm = TRUE)
+  ) %>%
+  pivot_longer(cols = c(Sedentary, VeryActive),
+               names_to = "Activity_Type",
+               values_to = "Average_Minutes") %>%
+  mutate(Activity_Type = factor(
+    Activity_Type,
+    levels = c("Sedentary", "VeryActive")
+  ))
+```
+
+```{r echo=FALSE}
+viz_daily_intensity_breakdown <- daily_intensity_data %>%
+  ggplot(aes(x = DayOfWeek, y = Average_Minutes, fill = Activity_Type)) +
+  geom_bar(stat = "identity", position = "stack") +
+  scale_fill_manual(values = c("VeryActive" = "#4CAF50", "Sedentary" = "#9E9E9E")) +
+  labs(title = "Average Daily Activity Minutes: Sedentary vs. Very Active",
+       subtitle = "Analysis limited to existing intensity columns (Sedentary and Very Active).",
+       x = "Day of Week",
+       y = "Average Minutes per Day",
+       fill = "Intensity Level") +
+  theme_minimal() +
+  theme(legend.position = "bottom")
+
+print(viz_daily_intensity_breakdown)
+```
+
+# Conclusion and
+## Key Insights
+
+#### The majority of users exist within the "Lightly Active" and "Moderately Active" segments. This suggests that the primary market opportunity is trying to motivate sporadic users to become a little more consistent
+
+#### For targeted sleep intervention, while the majority of sleep is healthy, there is a noticable subset of users getting under 6 hours. Focusing programming on sleep hygiene education might work for this group
+
+#### According to the visualizaiton, the best window for exercise promotion is in the late afternoon, between 5 and 7pm. You can see this in step counts, and overall intensity. Pushing communication or challenges would work just before this timeframe, as users may be more likely to act on these with the upcoming exercise window.
+
+#### The daily intensity breakdown reveals that "Sedentary Minutes" dominate, even on the most active days. This is not a surprise; but could be an opportunity to try to convert sedentary time into light activity. And furthermore, light activity into moderate activity or even vigorous activity.
+
+#### Weekends are consistently the most sedentary days, suggesting that removing work structure leads to decreased movement. Possibly developing weekend-specific goals, or challenges my address this behavioral gap.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

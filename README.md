@@ -23,7 +23,7 @@ All analysis, data cleaning, and visualizations are publicly available here in t
 
 | File | Description | Focus |
 | :--- | :--- | :--- |
-| **Final Report** | [Bellabeat_Casestudy.docx](Bellabeat_Casestudy.docx) | **Executive Summary** and high-level findings for a business audience. |
+| **Final Report** | [Bellabeat_Casestudy.docx](Bellabeat_Analysis_Overview.pdf) | **Executive Summary** and high-level findings for a business audience. |
 | **Source Code** | [Bellabeat_Data_Analysis_Capstone.Rmd](Bellabeat_Analysis_with_code.Rmd) | The complete R Markdown file containing all data cleaning, processing, and raw analysis code. |
 | **Data Visuals** | `/images` folder | Final visualizations (.png files) used in the report. |
 

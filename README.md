@@ -42,3 +42,5 @@ All analysis, data cleaning, and visualizations are publicly available here in t
 <img width="3000" height="1800" alt="viz_segmented_non_utilization" src="https://github.com/user-attachments/assets/6a84fd83-dc2c-429a-a7e1-68effffd2dea" />
 
 <img width="3000" height="1800" alt="viz_sleep_distribution_histogram" src="https://github.com/user-attachments/assets/f05927ca-5d9a-4cd4-a908-814e5e5e1816" />
+
+<img width="3000" height="1800" alt="viz_hourly_total_intensity" src="https://github.com/user-attachments/assets/c6c46b52-22d0-4a90-aac1-42979ed11fab" />

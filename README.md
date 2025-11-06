@@ -25,7 +25,6 @@ All analysis, data cleaning, and visualizations are publicly available here in t
 | :--- | :--- | :--- |
 | **Final Report** | [Bellabeat_Casestudy.docx](Bellabeat_Analysis_Overview.pdf) | **Executive Summary** and high-level findings for a business audience. |
 | **Source Code** | [Bellabeat_Data_Analysis_Capstone.Rmd](Bellabeat_Analysis_with_code.Rmd) | The complete R Markdown file containing all data cleaning, processing, and raw analysis code. |
-| **Data Visuals** | `/images` folder | Final visualizations (.png files) used in the report. |
 
 ---
 
@@ -40,6 +39,6 @@ All analysis, data cleaning, and visualizations are publicly available here in t
 
 ## 📊 Key Visualizations (The Story at a Glance)
 
-*Embed your final images here. Drag and drop the PNG files into your GitHub editor, or link to them directly if you put them in an /images folder.*
+<img width="3000" height="1800" alt="viz_segmented_non_utilization" src="https://github.com/user-attachments/assets/6a84fd83-dc2c-429a-a7e1-68effffd2dea" />
 
-*(Example: Drag in the Steps vs. Calories scatter plot and the Sleep Distribution histogram to showcase your best work.)*
+<img width="3000" height="1800" alt="viz_sleep_distribution_histogram" src="https://github.com/user-attachments/assets/f05927ca-5d9a-4cd4-a908-814e5e5e1816" />
